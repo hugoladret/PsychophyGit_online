@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<!--
+Based on the code by Mark Wexler 
+-->
+<html>
+<head>
+
+<script src="fullscreen.js"></script>
+
+<script>
+
+// uses a reference frame in which the origin is at the center, height is 2 (positive is up),
+// and width is proportional
+
+width_pix = 500;		// not real pixels, logical pixels (window height about 600 at any resolution)
+height_pix = 500;
+stimulus_duration = 0.5;	// seconds
+n_repetitions = 10;
+lifetime_frames = 12;	// in refresh calls, where usually 1 refresh call = 1 monitor refresh
+frame_rate = 60;		// assumed frame rate for distance calculation
+data_server = "http://lab-perception.org/js/savedata.py";
+
+function get_time()
+{
+	return (new Date()).getTime()/1000.0;
+}
+
+function new_stimulus(trial)
+{
+	var n_frames = Math.round(stimulus_duration*frame_rate);
+	FRAME = new Array(n_frames);
+	for(var f = 0; f < n_frames; f++) {
+		FRAME[f] = trial.direction+'.png';
+	}
+}
+
+function center(elem)
+{
+	elem.style.padding = "0px";
+	elem.style.margin = "auto";
+	elem.style.display = "block";
+	elem.style.position = "absolute";
+	elem.style.top = elem.style.bottom = elem.style.left = elem.style.right = "0px";
+}
+
+// randomize array order in-place using Durstenfeld shuffle algorithm
+function shuffle_array(array)
+{
+    for(var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random()*(i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+}
+
+window.onload = function()
+{
+	state = "create form";
+	update();
+};
+
+function update()
+{
+	var keep_going = true;
+	if(state == "create form") {
+		form_table = document.createElement("table");
+		form_table.style.width = "500px";
+		form_table.style.height = "150px";
+		center(form_table);
+		var tbody = document.createElement("div");
+		var tr, td;
+		
+		tr = document.createElement("tr");
+		td = document.createElement("td");
+		td.appendChild(document.createTextNode("Subject:"));
+		td.style.textAlign = "right";
+		tr.appendChild(td);
+		td = document.createElement("td");
+		input_subj = document.createElement("input");
+		td.appendChild(input_subj);
+		tr.appendChild(td);
+		tbody.appendChild(tr);
+		
+		tr = document.createElement("tr");
+		td = document.createElement("td");
+		td.appendChild(document.createTextNode("Age:"));
+		td.style.textAlign = "right";
+		tr.appendChild(td);
+		td = document.createElement("td");
+		input_age = document.createElement("input");
+		td.appendChild(input_age);
+		tr.appendChild(td);
+		tbody.appendChild(tr);
+		
+		tr = document.createElement("tr");
+		td = document.createElement("td");
+		td.appendChild(document.createTextNode("Email address to send the data (or blank):"));
+		td.style.textAlign = "right";
+		tr.appendChild(td);
+		td = document.createElement("td");
+		input_email = document.createElement("input");
+		td.appendChild(input_email);
+		tr.appendChild(td);
+		tbody.appendChild(tr);
+		
+		tr = document.createElement("tr");
+		tr.appendChild(document.createElement("td"));
+		td = document.createElement("td");
+		var start_button = document.createElement("button");
+		start_button.appendChild(document.createTextNode("Start"));
+		start_button.onclick = function() { state = "start experiment"; };
+		td.appendChild(start_button);
+		tr.appendChild(td);
+		tbody.appendChild(tr);
+
+		form_table.appendChild(tbody);
+		document.body.appendChild(form_table);
+		state = "wait for form";
+	}
+	
+	
+	else if(state == "start experiment") {
+		subj_info = {};
+		subj_info.subject = input_subj.value;
+		subj_info.age = input_age.value;
+		subj_info.email = input_email.value;
+		document.body.removeChild(form_table);
+		document.documentElement.requestFullscreen();
+		
+		trials = [];		// create factorial plan
+		for(var direction = 1; direction <= 2; direction++) {
+			for(var i_repetition = 0; i_repetition < n_repetitions; i_repetition++){
+				trials.push({direction: direction});
+			}}
+		console.log(trials);
+		shuffle_array(trials);	// randomize order of trials
+		n_trial = 0;
+		
+		canvas = document.createElement("canvas");		// create canvas for stimulus
+		canvas.width = window.devicePixelRatio*width_pix;		// the next four lines set the size and resolution
+		canvas.height = window.devicePixelRatio*height_pix;		// the canvas; you need to scale .width and .height by
+		canvas.style.width = width_pix + "px";					// window.devicePixelRatio to get high resolution on
+		canvas.style.height = height_pix + "px";				// high pixel density monitors, but NOT .style.width/height
+		center(canvas);
+		var context = canvas.getContext("2d");
+		// the next two transformations set a reference frame where (0, 0) is at the center of the canvas,
+		// (0, +1) is at the top on in the middle and (0, -1) at the bottom in the middle, so the height is 2
+		// (+1, 0) is at the same distance from the center but to the right, etc.
+		context.translate(window.devicePixelRatio*width_pix/2, window.devicePixelRatio*height_pix/2);
+		context.scale(window.devicePixelRatio*height_pix/2, -window.devicePixelRatio*height_pix/2);
+		height = 2.0;
+		width = (width_pix/height_pix)*height;
+		document.body.appendChild(canvas);
+		
+		instruction_text = document.createElement("div");
+		document.body.appendChild(instruction_text);
+		data_display_text = document.createElement("div");
+		document.body.appendChild(data_display_text);
+		
+		state = "begin trial";
+	}
+	
+	
+	else if(state == "begin trial") {		// initialize trial, start the wait for the go signal (space bar)
+		instruction_text.innerHTML = "<b>HIT SPACE BAR TO START TRIAL " + (n_trial + 1) + "/" + trials.length + "</b>";
+		trial = trials[n_trial];
+		new_stimulus(trial);
+		document.onkeydown = function(e) { if(e.keyCode == 32) state = "start motion"; };
+		state = "wait";
+	}
+	
+	else if(state == "wait") {
+	}
+	
+	else if(state == "start motion") {
+		document.onkeydown = null;
+		instruction_text.innerHTML = "";
+		t0 = null;
+		n_frames = 0;
+		state = "motion";
+	}
+	
+	else if(state == "motion") {	// display continuous RDK
+		if(t0 === null) t0 = get_time();
+		var t = get_time() - t0;
+		var f = Math.round(t*frame_rate);
+		var context = canvas.getContext("2d");
+		context.clearRect(-width/2, -height/2, width, height);
+		if(f >= FRAME.length) {
+			context.clearRect(0, 0, width_pix, height_pix);
+			state = "start response";
+		}
+		else {
+			context.save();
+			context.setTransform(1, 0, 0, 1, 0, 0);
+			base_image = new Image();
+			base_image.src = FRAME[f]
+			base_image.onload = function(){
+				context.drawImage(base_image, 0, 0);
+			}
+			//context.drawImage(FRAME[f], 0, 0);
+			
+		}
+		n_frames++;
+	}
+	
+	else if(state == "start response") {
+	
+		t0 = null;
+		instruction_text.innerHTML = "<b>LEFT OR RIGHT? RESPOND USING ARROWS</b>";
+		document.onkeydown = function(e) {
+			if(["ArrowLeft", "ArrowRight"].includes(e.key)) {
+				trial.response = (e.key == "ArrowLeft" ? -1 : +1);
+				trial.rt = get_time() - t0;
+				state = "end trial";
+			}
+		};
+		state = "response";
+	}
+	
+	else if(state == "response") {
+		if(t0 === null) t0 = get_time();
+	}
+	else if(state == "end trial") {
+		document.onkeydown = null;
+		instruction_text.innerHTML = "";
+		trial.correct = trial.response == trial.direction;
+		trials[n_trial] = trial;
+		n_trial++;
+		if(n_trial < trials.length)
+			state = "begin trial";
+		else
+			state = "end experiment";
+	}
+	
+	else if(state == "end experiment") {
+		// compile data into a text string that will be sent to the data server (and stored in a file, e.g.)
+		var data_text = [];
+		data_text.push(["SUBJECT", "AGE", "DIRECTION", "RESPONSE", "CORRECT", "RT"].join("\t"));
+		for(var i = 0; i < trials.length; i++) {
+			var tr = trials[i];
+			data_text.push([subj_info.subject, subj_info.age,
+							tr.direction, tr.response, (tr.correct ? 1 : 0), tr.rt].join("\t"));
+		}
+		data_text = data_text.join("\n");
+		console.log(data_text);			// dump data to console for debugging purposes
+		instruction_text.innerHTML = "<b>SENDING DATA TO " + data_server + "<b>";
+		data_display_text.innerHTML = "Data sent:<br><pre>" + data_text + "</pre>";
+		var request_text = "data=" + encodeURIComponent(data_text) + "&email=" + encodeURIComponent(subj_info.email);		
+		request = new XMLHttpRequest();	// make request a global variable, so that it can be accessed by the on_request_state_change function
+		request.open("POST", data_server, true);
+		request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		//request.onreadystatechange = on_request_state_change;
+		request.send(request_text);		// this is the simplest way of sending an HTTP request
+										// however, occasionally internet requests get lost (typically 1%)
+										// the best thing would be to monitor the results of the request,
+										// and to retry if necessary (set onreadystatechange and ontimeout
+										// members to functions that will monitor the request and resubmit 
+										// if necessary)
+		instruction_text.innerHTML = "<b>DATA SENT TO " + data_server + "<b>";
+		document.exitFullscreen();
+		keep_going = false;
+	}
+	
+	if(keep_going)
+		requestAnimationFrame(update);	// will call update on next frame (usually)
+}
+
+// this function is called when something happens the HTTP request used to send the data to the server
+// it can be used to make sure that the data actually reaches its destination, and in the rare case that
+// it doesn't, to try again
+// also consider using the ontimeout function
+/*
+function on_request_state_change()
+{
+	if(request.readyState == 4) {
+		if(request.status == 200)
+			instruction_text.innerHTML = "<b>DATA SUCCESSFULLY SENT TO " + data_server + "<b>";
+		else
+			instruction_text.innerHTML = "<b>DATA DID NOT ARRIVE AT " + data_server + "! (status " + request.status + ")<b>";
+	}
+}
+*/
+
+/*
+Below is a working example of a server-side script, in Python. In our case the script is
+in the file http://lab-perception.org/js/savedata.py. It can be used to receive the data
+and store it in a file with a unique name (0001.dat, 0002.dat, etc.), together with a date
+and time, and to optionally send the data to an email address. Similar scripts can of course
+be written in PHP or other server scripting languages.
+
+When testing, don't forget the set permissions (read and execute for the script, write for the
+directory where the data files will go: in our case, ./data). Also make sure that your server
+will execute the script. In my case (Apache 2), I added the following lines the configuration
+file:
+<Directory "/var/www/html/js">
+	Require all granted
+	Options +ExecCGI
+	AddHandler cgi-script .cgi .py
+</Directory>
+<Directory "/var/www/html/js/data">
+	Require all denied
+</Directory>
+
+Also note that if the server-side script isn't on the same site that served the client script
+(for example, if you simply execute the client script from a file on your own machine), this
+would be an example of Cross-Origin Resource Sharing (CORS), and needs to be handled carefully
+(see https://web.dev/cross-origin-resource-sharing/).
+*/
+/*
+#!/usr/bin/env python
+
+import cgi, os, datetime, re
+import smtplib
+from email.mime.text import MIMEText
+
+DATA_DIR = './data'             # the directory in which to put the data file
+SUFFIX = 'dat'
+EMAIL_FROM = 'Mark Wexler <mark@lab-perception.org>'
+EMAIL_SMTP = 'localhost'
+
+dt = datetime.datetime.now()    # get current date and time (put it as a comment at the beginning of the data file)
+millis = int(round(float(dt.microsecond)/1000.0))
+now = dt.strftime('%Y-%m-%d-%H-%M-%S') + '-' + ('%03d' % millis)
+
+fs = cgi.FieldStorage()         # get the data field
+data = fs.getfirst('data')
+
+os.chdir(DATA_DIR)              # get the next unused name for a data file
+file_names = os.listdir('.')    # order is 0001.dat, 0002.dat, etc.
+existing = []
+for file_name in file_names:
+    m = re.match(r'^([0-9]+)\.' + SUFFIX + r'$', file_name)
+    if m:
+        existing.append(int(m.group(1)))
+if existing:
+    n = max(existing) + 1
+else:
+    n = 1
+data_fn = '%04d.%s' % (n, SUFFIX)
+
+fp = open(data_fn, 'wt')        # save the data
+fp.write('# ' + now + '\n')     # first the date and time as a comment
+fp.write(data)                  # then the contents of the data field
+fp.close()
+
+# send the data by email, if we got an email address
+if 'email' in fs:
+    email = fs.getfirst('email').strip()
+    if email:
+        msg = MIMEText(data)
+        msg['Subject'] = 'data from on-line experiment'
+        msg['From'] = EMAIL_FROM
+        msg['To'] = email
+        s = smtplib.SMTP(EMAIL_SMTP)
+        s.sendmail(EMAIL_FROM, [email], msg.as_string())
+        s.quit()
+
+print('Content-Type: text/html')    # you have to send something back
+print('')                           # even if it won't be displayed
+print('ok')
+*/
+
+</script>
+</head>
+<body></body>
+</html>
+

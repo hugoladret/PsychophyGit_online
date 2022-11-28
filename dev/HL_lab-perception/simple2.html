@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script>
+
+var S = 200;
+
+window.onload = function()
+{
+	var canvas = document.createElement("canvas");
+	canvas.width = canvas.height = S;
+	document.body.appendChild(canvas);
+	var context = canvas.getContext("2d");
+	context.clearRect(0, 0, S, S);
+	context.fillStyle = "red";
+	context.arc(S/2, S/2, S/4, 0, 2*Math.PI);
+	context.fill();
+	context.font = "30px sans-serif";
+	context.fillStyle = "black";
+	context.textAlign = "center";
+	context.textBaseline = "middle";
+	context.fillText("hello, world", S/2, S/2);
+};
+</script>
+</head>
+<body></body>
+</html>
