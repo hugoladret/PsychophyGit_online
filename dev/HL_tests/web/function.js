@@ -3,26 +3,6 @@
     <head>
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous"> 
         <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-        
-        <style type="text/css">
-        .center
-        {
-         text-align:center;
-         display:block;
-        }
-        .outer {
-        width: 1px; /* Or zero, or something very small */
-        margin: auto;
-        overflow: visible;
-        background: red; /* A color just for debug */
-        }
-        .inner {
-            margin-left: 20px;
-            background: yellow; /* A color just for debug */
-            width: 100px;
-        }
-        </style>
-        
         <!-- Include eel.js - note this file doesn't exist in the 'web' directory -->
         <script type="text/javascript" src="/eel.js"></script>
         <script type="text/javascript">
@@ -32,12 +12,6 @@
                     function say_hello_js(x) {
                     console.log("Hello from " + x);
                     }
-                    
-                    eel.expose(get_screen_res_js);               // Expose this function to Python
-                    function get_screen_res_js(x) {
-                    return [window.screen.availHeight, window.screen.availWidth];
-                    }
-                    
                     say_hello_js("Javascript World!");
                     eel.handleinput("connected!");  // Call a Python function
                     
@@ -47,23 +21,13 @@
                     });
         }); 
         </script>
-        
     </head>
     
     <body>
-        <center><h1>Input Example: Enter a value and check python console</h1>
-        <div class='outer'>
-             <div class="inner">
-                 <img src='chi1.png' id='img' alt='woufe woufe' width='500' height='375'>
-             </div>
-        <\div>
-        
-        <div style="text-align: left"><img src='left.png' width="150" /></div>
-        <div> 
-            <p>The right arrow using the entity number: &#8594;</p>
-            <p>The left arrow using the entity number: &#8592;</p>
+        <h1>Input Example: Enter a value and check python console</h1>
+        <div>
             <input type='text' id='inp' placeholder='Write anything'>
             <input type='button' id='btn' class='btn btn-primary' value='Submit'>
-        </div></center>
+        </div>
     </body>
 </html>

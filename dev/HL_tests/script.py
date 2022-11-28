@@ -1,6 +1,9 @@
 import eel
+from screeninfo import get_monitors
+m0 = get_monitors()[0]
 
-eel.init('web')                     # Give folder containing web files
+
+eel.init('web')
 
 @eel.expose                         # Expose this function to Javascript
 def handleinput(x):
@@ -8,4 +11,7 @@ def handleinput(x):
 
 eel.say_hello_js('connected!')   # Call a Javascript function
 
-eel.start('main.html', size=(800, 600), mode = 'chrome')    # Start
+
+eel.start('main.html', size=(m0.width,m0.height), mode = 'chrome')    # Start
+
+
