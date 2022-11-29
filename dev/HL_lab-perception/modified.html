@@ -52,14 +52,16 @@ function getBase64FromImageUrl(url) {
 
         var dataURL = canvas.toDataURL("image/png");
     };
-
     img.src = url;
+	return img;
 }
 
 function new_stimulus(trial)
 {
 	img_url = json_url + params['img_dir'] + '/' + trial.direction + '.' + params['img_ext']
+	console.log(img_url)
 	var img = getBase64FromImageUrl(img_url);
+	console.log(img);
 	
 	var n_frames = Math.round(params['stimulus_duration']*params['frame_rate']);
 	FRAME = new Array(n_frames);
@@ -240,11 +242,8 @@ function update()
 		else {
 			context.save();
 			context.setTransform(1, 0, 0, 1, 0, 0);
-			base_image = new Image();
-			base_image.src = FRAME[f]
-			base_image.onload = function(){
-				context.drawImage(base_image, 0, 0);
-			}
+			base_image = FRAME[f]
+			context.drawImage(base_image, 0, 0);
 			//context.drawImage(FRAME[f], 0, 0);
 			
 		}
