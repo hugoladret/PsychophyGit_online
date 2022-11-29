@@ -27,9 +27,7 @@ params=myJson
 console.log(params)
 })
 
-
-//img_extension = 		params['img_extension'];
-//data_server = "http://lab-perception.org/js/savedata.py";
+data_server = "http://lab-perception.org/js/savedata.py";
 
 
 function get_time()
@@ -110,17 +108,6 @@ function update()
 		
 		tr = document.createElement("tr");
 		td = document.createElement("td");
-		td.appendChild(document.createTextNode("Number of images:"));
-		td.style.textAlign = "right";
-		tr.appendChild(td);
-		td = document.createElement("td");
-		input_n_imgs = document.createElement("input");
-		td.appendChild(input_n_imgs);
-		tr.appendChild(td);
-		tbody.appendChild(tr);
-		
-		tr = document.createElement("tr");
-		td = document.createElement("td");
 		td.appendChild(document.createTextNode("Subject:"));
 		td.style.textAlign = "right";
 		tr.appendChild(td);
@@ -172,7 +159,6 @@ function update()
 		subj_info.subject = input_subj.value;
 		subj_info.age = input_age.value;
 		subj_info.email = input_email.value;
-		subj_info.n_images = input_n_imgs.value;
 		document.body.removeChild(form_table);
 		document.documentElement.requestFullscreen();
 		
