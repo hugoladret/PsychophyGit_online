@@ -8,66 +8,64 @@ Based on the code by Mark Wexler
 <script src="fullscreen.js"></script>
 
 <script>
-
-// uses a reference frame in which the origin is at the center, height is 2 (positive is up),
-// and width is proportional
-
-width_pix = 500;		// not real pixels, logical pixels (window height about 600 at any resolution)
-height_pix = 500;
-stimulus_duration = 0.5;	// seconds
-n_repetitions = 10;
-lifetime_frames = 12;	// in refresh calls, where usually 1 refresh call = 1 monitor refresh
-frame_rate = 60;		// assumed frame rate for distance calculation
-data_server = "http://lab-perception.org/js/savedata.py";
-img_extension = '.png';
-
 var hashParams = window.location.hash.substr(1).split('&'); // substr(1) to remove the `#`
-var dir_url = hashParams[0]
+var dir_url = hashParams[0];
 
-/*
-function FillForm() {
-// Specify form's name between the quotes on next line.
-var FormName = "MyForm";
-var questionlocation = location.href.indexOf('?');
-if(questionlocation < 0) { return; }
-var q = location.href.substr(questionlocation + 1);
-var list = q.split('&');
-for(var i = 0; i < list.length; i++) {
-   var kv = list[i].split('=');
-   if(! eval('document.'+FormName+'.'+kv[0])) { continue; }
-   kv[1] = unescape(kv[1]);
-   if(kv[1].indexOf('"') > -1) {
-      var re = /"/g;
-      kv[1] = kv[1].replace(re,'\\"');
-      }
-   eval('document.'+FormName+'.'+kv[0]+'.value="'+kv[1]+'"');
-   }
+if(dir_url.split('.com')[0].includes('github')){
+	json_url = 'https://raw.githubusercontent.com'+ dir_url.split('.com')[1]
 }
-FillForm();
-*/
+
+console.log(json_url)
+
+let params  = ''
+fetch(json_url+'/config.json')
+.then(function(response) {
+return response.json();
+})
+.then(function(myJson) {
+params=myJson
+console.log(params)
+})
 
 
-function isImgUrl(url) {
-  const img = new Image();
-  img.src = url;
-  return new Promise((resolve) => {
-    img.onerror = () => resolve(false);
-    img.onload = () => resolve(true);
-  });
-}
+//img_extension = 		params['img_extension'];
+//data_server = "http://lab-perception.org/js/savedata.py";
+
 
 function get_time()
 {
 	return (new Date()).getTime()/1000.0;
 }
 
+function getBase64FromImageUrl(url) {
+    var img = new Image();
+
+    img.setAttribute('crossOrigin', 'anonymous');
+
+    img.onload = function () {
+        var canvas = document.createElement("canvas");
+        canvas.width =this.width;
+        canvas.height =this.height;
+
+        var ctx = canvas.getContext("2d");
+        ctx.drawImage(this, 0, 0);
+
+        var dataURL = canvas.toDataURL("image/png");
+    };
+
+    img.src = url;
+}
+
 function new_stimulus(trial)
 {
-	var n_frames = Math.round(stimulus_duration*frame_rate);
+	img_url = json_url + params['img_dir'] + '/' + trial.direction + '.' + params['img_ext']
+	var img = getBase64FromImageUrl(img_url);
+	
+	var n_frames = Math.round(params['stimulus_duration']*params['frame_rate']);
 	FRAME = new Array(n_frames);
 	for(var f = 0; f < n_frames; f++) {
 		console.log(trial.direction)
-		FRAME[f] = dir_img_url+trial.direction+'.png';
+		FRAME[f] = img;
 	}
 }
 
@@ -178,28 +176,27 @@ function update()
 		
 		trials = [];		// create factorial plan
 		for(var direction = 1; direction <= 2; direction++) {
-			for(var i_repetition = 0; i_repetition < n_repetitions; i_repetition++){
+			for(var i_repetition = 0; i_repetition < params['n_repetitions']; i_repetition++){
 				trials.push({direction: direction});
-				//console.log(isImgUrl())
 			}}
 		console.log(trials);
 		shuffle_array(trials);	// randomize order of trials
 		n_trial = 0;
 		
 		canvas = document.createElement("canvas");		// create canvas for stimulus
-		canvas.width = window.devicePixelRatio*width_pix;		// the next four lines set the size and resolution
-		canvas.height = window.devicePixelRatio*height_pix;		// the canvas; you need to scale .width and .height by
-		canvas.style.width = width_pix + "px";					// window.devicePixelRatio to get high resolution on
-		canvas.style.height = height_pix + "px";				// high pixel density monitors, but NOT .style.width/height
+		canvas.width = window.devicePixelRatio*params['width_pix'];		// the next four lines set the size and resolution
+		canvas.height = window.devicePixelRatio*params['height_pix'];		// the canvas; you need to scale .width and .height by
+		canvas.style.width = params['width_pix'] + "px";					// window.devicePixelRatio to get high resolution on
+		canvas.style.height = params['height_pix'] + "px";				// high pixel density monitors, but NOT .style.width/height
 		center(canvas);
 		var context = canvas.getContext("2d");
 		// the next two transformations set a reference frame where (0, 0) is at the center of the canvas,
 		// (0, +1) is at the top on in the middle and (0, -1) at the bottom in the middle, so the height is 2
 		// (+1, 0) is at the same distance from the center but to the right, etc.
-		context.translate(window.devicePixelRatio*width_pix/2, window.devicePixelRatio*height_pix/2);
-		context.scale(window.devicePixelRatio*height_pix/2, -window.devicePixelRatio*height_pix/2);
+		context.translate(window.devicePixelRatio*params['width_pix']/2, window.devicePixelRatio*params['height_pix']/2);
+		context.scale(window.devicePixelRatio*params['height_pix']/2, -window.devicePixelRatio*params['height_pix']/2);
 		height = 2.0;
-		width = (width_pix/height_pix)*height;
+		width = (params['width_pix']/params['height_pix'])*height;
 		document.body.appendChild(canvas);
 		
 		instruction_text = document.createElement("div");
@@ -233,11 +230,11 @@ function update()
 	else if(state == "motion") {	// display continuous RDK
 		if(t0 === null) t0 = get_time();
 		var t = get_time() - t0;
-		var f = Math.round(t*frame_rate);
+		var f = Math.round(t*params['frame_rate']);
 		var context = canvas.getContext("2d");
 		context.clearRect(-width/2, -height/2, width, height);
 		if(f >= FRAME.length) {
-			context.clearRect(0, 0, width_pix, height_pix);
+			context.clearRect(0, 0, params['width_pix'], params['height_pix']);
 			state = "start response";
 		}
 		else {
@@ -294,6 +291,7 @@ function update()
 		}
 		data_text = data_text.join("\n");
 		console.log(data_text);			// dump data to console for debugging purposes
+		export2txt(data_text);
 		instruction_text.innerHTML = "<b>SENDING DATA TO " + data_server + "<b>";
 		data_display_text.innerHTML = "Data sent:<br><pre>" + data_text + "</pre>";
 		var request_text = "data=" + encodeURIComponent(data_text) + "&email=" + encodeURIComponent(subj_info.email);		
