@@ -1,6 +1,6 @@
 {
-  "width_pix" : 1600,
-  "height_pix" : 900,
+  "width_pix" : 1200,
+  "height_pix" : 512,
   
   "stimulus_duration" : 2,
   "frame_rate" : 60,
