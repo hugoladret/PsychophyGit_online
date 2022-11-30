@@ -6,8 +6,9 @@
   "frame_rate" : 60,
   "n_repetitions" : 10,
 
-  "img_extension" : ".png",
-  "img_dir" : "imgs",
+  "true_img_dir" : "true_imgs",
+  "ai_img_dir" : "ai_imgs",
+  "n_images" : 10
+  
   "img_ext" : "png",
-  "n_images" : 2
 }

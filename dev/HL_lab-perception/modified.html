@@ -276,7 +276,6 @@ function update()
 		}
 		data_text = data_text.join("\n");
 		console.log(data_text);			// dump data to console for debugging purposes
-		export2txt(data_text);
 		instruction_text.innerHTML = "<b>SENDING DATA TO " + data_server + "<b>";
 		data_display_text.innerHTML = "Data sent:<br><pre>" + data_text + "</pre>";
 		var request_text = "data=" + encodeURIComponent(data_text) + "&email=" + encodeURIComponent(subj_info.email);		
