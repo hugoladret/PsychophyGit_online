@@ -236,7 +236,6 @@ function update()
 			var millieu = (window.devicePixelRatio*windows_size)/2;
 			
 			var offset = 10;
-			console.log(windows_size);
 			console.log(FRAME[f][2]);
 			if(FRAME[f][2] == 1){
 				correct_img = FRAME[f][0];
@@ -245,9 +244,9 @@ function update()
 				context.drawImage(false_img, millieu+(offset/2), 0);
 			} else {
 				correct_img = FRAME[f][0];
-				context.drawImage(correct_img, millieu-512-(offset/2), 0);
+				context.drawImage(correct_img, millieu+(offset/2), 0);
 				false_img = FRAME[f][1];
-				context.drawImage(false_img, millieu+(offset/2), 0);
+				context.drawImage(false_img, millieu-512-(offset/2), 0);
 			}
 			
 		}
@@ -287,14 +286,51 @@ function update()
 	else if(state == "end experiment") {
 		// compile data into a text string that will be sent to the data server (and stored in a file, e.g.)
 		var data_text = [];
-		data_text.push(["SUBJECT", "AGE", "POS", "RESP", "COREC?", "RT"].join("\t\t\t| "));
+		data_text.push(["SUBJECT", "AGE", "POS", "RESP", "CORR.?", "RT"].join("\t\t\t| "));
+		var name_subj = '';
+		if(subj_info.subject.length > 5){
+			name_subj = subj_info.subject.slice(0,5);
+		} else {
+		name_subj = subj_info.subject;
+		}
+		
+		var total_trues = 0;
+		var mean_rt = 0;
 		for(var i = 0; i < trials.length; i++) {
 			var tr = trials[i];
-			data_text.push([subj_info.subject, subj_info.age,
+			data_text.push([name_subj, subj_info.age,
 							tr.direction, tr.response, (tr.correct ? 1 : 0), tr.rt.toFixed(3)].join("\t\t\t| "));
+			total_trues += (tr.correct ? 1 : 0);
+			mean_rt += tr.rt
 		}
+		data_text.push([' TOTAL CORRECT = ', (total_trues / params['n_images'])*100, '%', '\n',
+						'MEAN REACTION TIME = ', (mean_rt / params['n_images']), 's'].join(' '));
 		data_text = data_text.join("\n");
 		console.log(data_text);			// dump data to console for debugging purposes
+		
+		
+		
+		class JavascriptDataDownloader {
+			constructor(data={}) {
+				this.data = data;
+			}
+
+			download (type_of = "text/plain", filename= name_subj+'_'+subj_info.age+'_'+get_time()+"_data.txt") {
+				let body = document.body;
+				const a = document.createElement("a");
+				a.href = URL.createObjectURL(new Blob([JSON.stringify(this.data, null, 2)], {
+					type: type_of
+				}));
+				a.setAttribute("download", filename);
+				body.appendChild(a);
+				a.click();
+				body.removeChild(a);
+			}
+		} 
+
+		new JavascriptDataDownloader(trials).download();
+
+		
 		instruction_text.innerHTML = "<b>SENDING DATA TO " + data_server + "<b>";
 		data_display_text.innerHTML = "Data sent:<br><pre>" + data_text + "</pre>";
 		var request_text = "data=" + encodeURIComponent(data_text) + "&email=" + encodeURIComponent(subj_info.email);		
