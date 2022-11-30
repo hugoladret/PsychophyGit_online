@@ -6,16 +6,15 @@ Based on the code by Mark Wexler
 <head>
 
 <script src="fullscreen.js"></script>
-
 <script>
-var hashParams = window.location.hash.substr(1).split('&'); // substr(1) to remove the `#`
-var dir_url = hashParams[0];
 
+var hashParams = window.location.hash.substr(1).split('&'); 
+var dir_url = hashParams[0];
 if(dir_url.split('.com')[0].includes('github')){
 	json_url = 'https://raw.githubusercontent.com'+ dir_url.split('.com')[1]
 }
 
-console.log(json_url)
+console.log('DEBUG : Found JSON url @ --> ' + json_url) 	// DEBUG
 
 let params  = ''
 fetch(json_url+'/config.json')
@@ -224,8 +223,10 @@ function update()
 		if(t0 === null) t0 = get_time();
 		var t = get_time() - t0;
 		var f = Math.round(t*params['frame_rate']);
+		
 		var context = canvas.getContext("2d");
 		context.clearRect(-width/2, -height/2, width, height);
+		console.log(width, height);
 		if(f >= FRAME.length) {
 			context.clearRect(0, 0, params['width_pix']*2, params['height_pix']*2);
 			state = "start response";
@@ -237,14 +238,14 @@ function update()
 			var offset = 512;
 			if(FRAME[f][2] = 1){
 				correct_img = FRAME[f][0];
-				context.drawImage(correct_img, 0, 0);
+				context.drawImage(correct_img, 0-offset, 0);
 				false_img = FRAME[f][1];
 				context.drawImage(false_img, 0+offset, 0);
 			} else {
 				correct_img = FRAME[f][1];
 				context.drawImage(correct_img, 0+offset, 0);
 				false_img = FRAME[f][0];
-				context.drawImage(false_img, 0, 0);
+				context.drawImage(false_img, 0-offset, 0);
 			}
 			
 		}
