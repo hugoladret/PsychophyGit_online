@@ -1,7 +1,7 @@
 {
   "height_pix" : 512,
   
-  "stimulus_duration" : 0.02,
+  "stimulus_duration" : 1,
   "frame_rate" : 60,
 
   "true_img_dir" : "true_imgs",

@@ -112,7 +112,7 @@ function update()
 		
 		tr = document.createElement("tr");
 		td = document.createElement("td");
-		td.appendChild(document.createTextNode("Subject:"));
+		td.appendChild(document.createTextNode("Subject ID (5 letters):"));
 		td.style.textAlign = "right";
 		tr.appendChild(td);
 		td = document.createElement("td");
@@ -260,7 +260,8 @@ function update()
 		instruction_text.innerHTML = "<b>LEFT OR RIGHT? RESPOND USING ARROWS</b>";
 		document.onkeydown = function(e) {
 			if(["ArrowLeft", "ArrowRight"].includes(e.key)) {
-				trial.response = (e.key == "ArrowLeft" ? -1 : +1);
+				trial.response = (e.key == "ArrowLeft" ? 1 : 2);
+				trial.direction = FRAME[0][2];
 				trial.rt = get_time() - t0;
 				state = "end trial";
 			}
@@ -274,7 +275,7 @@ function update()
 	else if(state == "end trial") {
 		document.onkeydown = null;
 		instruction_text.innerHTML = "";
-		trial.correct = trial.response == FRAME[0][2];
+		trial.correct = trial.response == trial.direction;
 		trials[n_trial] = trial;
 		n_trial++;
 		if(n_trial < trials.length)
@@ -286,11 +287,11 @@ function update()
 	else if(state == "end experiment") {
 		// compile data into a text string that will be sent to the data server (and stored in a file, e.g.)
 		var data_text = [];
-		data_text.push(["SUBJECT", "AGE", "DIRECTION", "RESPONSE", "CORRECT", "RT"].join("\t"));
+		data_text.push(["SUBJECT", "AGE", "POS", "RESP", "COREC?", "RT"].join("\t\t\t| "));
 		for(var i = 0; i < trials.length; i++) {
 			var tr = trials[i];
 			data_text.push([subj_info.subject, subj_info.age,
-							tr.direction, tr.response, (tr.correct ? 1 : 0), tr.rt].join("\t"));
+							tr.direction, tr.response, (tr.correct ? 1 : 0), tr.rt.toFixed(3)].join("\t\t\t| "));
 		}
 		data_text = data_text.join("\n");
 		console.log(data_text);			// dump data to console for debugging purposes
