@@ -326,7 +326,7 @@ function update()
 		var request_text = "data=" + encodeURIComponent(data_text) + "&email=" + encodeURIComponent(subj_info.email);
 
 		var xmlhttp = new XMLHttpRequest();
-		xmlhttp.open("POST", "/oeil/json.php");
+		xmlhttp.open("POST", "./save.php");
 		xmlhttp.setRequestHeader("Content-Type", "application/text");
 		xmlhttp.send(data_text);
 		// xmlhttp.send(JSON.stringify({"subj_info" : subj_info, "trials" : trials}));
