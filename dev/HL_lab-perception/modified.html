@@ -56,7 +56,7 @@ function getBase64FromImageUrl(url) {
 
 function new_stimulus(trial)
 {
-	img_url = json_url + params['img_dir'] + '/' + trial.direction + '.' + params['img_ext']
+	img_url = json_url + params['img_dir'] + '/' + trial.img_idx + '.' + params['img_ext']
 	console.log(img_url)
 	var img = getBase64FromImageUrl(img_url);
 	console.log(img);
@@ -64,7 +64,7 @@ function new_stimulus(trial)
 	var n_frames = Math.round(params['stimulus_duration']*params['frame_rate']);
 	FRAME = new Array(n_frames);
 	for(var f = 0; f < n_frames; f++) {
-		console.log(trial.direction)
+		console.log(trial.img_idx)
 		FRAME[f] = img;
 	}
 }
@@ -164,8 +164,9 @@ function update()
 		
 		trials = [];		// create factorial plan
 		for(var direction = 1; direction <= 2; direction++) {
-			for(var i_repetition = 0; i_repetition < params['n_repetitions']; i_repetition++){
-				trials.push({direction: direction});
+			for(var i = 0; i < params['n_images']; i++){
+				trials.push({direction: direction, 
+							img_idx : i});
 			}}
 		console.log(trials);
 		shuffle_array(trials);	// randomize order of trials
