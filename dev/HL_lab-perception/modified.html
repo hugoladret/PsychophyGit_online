@@ -318,6 +318,8 @@ function update()
 						'MEAN REACTION TIME = ', (mean_rt / params['n_images']).toFixed(3), 's'].join(' '));
 		data_text = data_text.join("\n");
 		console.log('DEBUG : Results are --> ' + data_text)  // DEBUG
+		//instruction_text.innerHTML = "<b>SENDING DATA TO " + data_server + "<b>";
+		data_display_text.innerHTML = "Data sent:<br><pre>" + data_text + "</pre>";
 		
 		var save_data = new FormData();
 		save_data.append("data" ,  data_text);
