@@ -9,5 +9,5 @@
   "ai_img_dir" : "ai_imgs",
   "n_images" : 10,
   
-  "img_ext" : "png",
+  "img_ext" : "png"
 }
