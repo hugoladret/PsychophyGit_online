@@ -8,11 +8,19 @@ Based on the code by Mark Wexler
 <script src="fullscreen.js"></script>
 <script>
 
+// INIT ------------------------------------------------
+// Get the JSON from the github URL
 var hashParams = window.location.hash.substr(1).split('&'); 
 var dir_url = hashParams[0];
 if(dir_url.split('.com')[0].includes('github')){
 	json_url = 'https://raw.githubusercontent.com'+ dir_url.split('.com')[1]
+	if(json_url.includes('tree/main')){
+		_ = json_url.split('tree/main')[0] + 'master' + json_url.split('tree/main')[1];
+		console.log(_);
+		json_url = _;
+	}
 }
+
 
 console.log('DEBUG : Found JSON url @ --> ' + json_url) 	// DEBUG
 
@@ -23,18 +31,24 @@ return response.json();
 })
 .then(function(myJson) {
 params=myJson
-console.log(params)
+console.log('DEBUG : JSON params are --> ' + params) 		// DEBUG
 })
 
+// Init some extra parameters
 var windows_size = window.screen.availWidth;
 data_server = "http://lab-perception.org/js/savedata.py";
+// ------------------------------------------------ INIT
 
 
+
+// UTILS ------------------------------------------------
+// UTILS : Return the local time, used for reaction times
 function get_time()
 {
 	return (new Date()).getTime()/1000.0;
 }
 
+// UTILS : Return a base64 image from an URL
 function getBase64FromImageUrl(url) {
     var img = new Image();
 
@@ -44,35 +58,15 @@ function getBase64FromImageUrl(url) {
         var canvas = document.createElement("canvas");
         canvas.width =this.width;
         canvas.height =this.height;
-
         var ctx = canvas.getContext("2d");
         ctx.drawImage(this, 0, 0);
-
         var dataURL = canvas.toDataURL("image/png");
     };
     img.src = url;
 	return img ;
 }
 
-function new_stimulus(trial)
-{
-	
-	true_img_url = json_url + params['true_img_dir'] + '/' + trial.img_idx + '.' + params['img_ext'];
-	var true_img = getBase64FromImageUrl(true_img_url);
-	
-	ai_img_url = json_url + params['ai_img_dir'] + '/' + trial.img_idx + '.' + params['img_ext'];
-	var ai_img = getBase64FromImageUrl(ai_img_url);
-	
-	var correct_direction = Math.floor(Math.random() * (2) + 1)
-	console.log(correct_direction)
-	
-	var n_frames = Math.round(params['stimulus_duration']*params['frame_rate']);
-	FRAME = new Array(n_frames);
-	for(var f = 0; f < n_frames; f++) {
-		FRAME[f] = [true_img, ai_img, correct_direction];
-	}
-}
-
+// UTILS : Center an element of the document
 function center(elem)
 {
 	elem.style.padding = "0px";
@@ -82,7 +76,7 @@ function center(elem)
 	elem.style.top = elem.style.bottom = elem.style.left = elem.style.right = "0px";
 }
 
-// randomize array order in-place using Durstenfeld shuffle algorithm
+// UTILS : randomize array order in-place using Durstenfeld shuffle algorithm (unmodified from Mark Wexler)
 function shuffle_array(array)
 {
     for(var i = array.length - 1; i > 0; i--) {
@@ -93,12 +87,35 @@ function shuffle_array(array)
     }
 }
 
+// UTILS : initialize the script state
 window.onload = function()
 {
 	state = "create form";
 	update();
 };
 
+// UTILS : put the stimulus in the FRAME object
+function new_stimulus(trial)
+{	
+	true_img_url = json_url + params['true_img_dir'] + '/' + trial.img_idx + '.' + params['img_ext'];
+	var true_img = getBase64FromImageUrl(true_img_url);
+	
+	ai_img_url = json_url + params['ai_img_dir'] + '/' + trial.img_idx + '.' + params['img_ext'];
+	var ai_img = getBase64FromImageUrl(ai_img_url);
+	
+	var correct_direction = Math.floor(Math.random() * (2) + 1)
+	var n_frames = Math.round(params['stimulus_duration']*params['frame_rate']);
+	FRAME = new Array(n_frames);
+	for(var f = 0; f < n_frames; f++) {
+		FRAME[f] = [true_img, ai_img, correct_direction];
+	}
+}
+// ------------------------------------------------ UTILS 
+
+
+
+
+// MAIN ------------------------------------------------
 function update()
 {
 	var keep_going = true;
@@ -171,7 +188,7 @@ function update()
 			trials.push({img_idx : i});
 		}
 		shuffle_array(trials);	// randomize order of trials
-		console.log(trials);
+		console.log('DEBUG : Shuffled trials are --> ' + trials)  	// DEBUG
 		n_trial = 0;
 		
 		canvas = document.createElement("canvas");							// create canvas for stimulus
@@ -181,11 +198,7 @@ function update()
 		canvas.style.height = params['height_pix'] + "px";					// high pixel density monitors, but NOT .style.width/height
 		center(canvas);
 		var context = canvas.getContext("2d");
-		// the next two transformations set a reference frame where (0, 0) is at the center of the canvas,
-		// (0, +1) is at the top on in the middle and (0, -1) at the bottom in the middle, so the height is 2
-		// (+1, 0) is at the same distance from the center but to the right, etc.
-		//context.translate(window.devicePixelRatio*windows_size/2, window.devicePixelRatio*params['height_pix']/2);
-		//context.scale(window.devicePixelRatio*params['height_pix']/2, -window.devicePixelRatio*params['height_pix']/2);
+
 		height = 2.0;
 		width = (windows_size/params['height_pix'])*height;
 		document.body.appendChild(canvas);
@@ -198,8 +211,7 @@ function update()
 		state = "begin trial";
 	}
 	
-	
-	else if(state == "begin trial") {		// initialize trial, start the wait for the go signal (space bar)
+	else if(state == "begin trial") {				// initialize trial, start the wait for the go signal (space bar)
 		instruction_text.innerHTML = "<b>HIT SPACE BAR TO START TRIAL " + (n_trial + 1) + "/" + trials.length + "</b>";
 		trial = trials[n_trial];
 		new_stimulus(trial);
@@ -207,10 +219,10 @@ function update()
 		state = "wait";
 	}
 	
-	else if(state == "wait") {
+	else if(state == "wait") {						// wait function for the begin trial state
 	}
 	
-	else if(state == "start motion") {
+	else if(state == "start motion") {				// initialize trial, start the wait for the go signal (space bar)
 		document.onkeydown = null;
 		instruction_text.innerHTML = "";
 		t0 = null;
@@ -218,11 +230,10 @@ function update()
 		state = "motion";
 	}
 	
-	else if(state == "motion") {	// display continuous RDK
+	else if(state == "motion") {					// display images 
 		if(t0 === null) t0 = get_time();
 		var t = get_time() - t0;
 		var f = Math.round(t*params['frame_rate']);
-		
 		var context = canvas.getContext("2d");
 		context.clearRect(-width/2, -height/2, width, height);
 		if(f >= FRAME.length) {
@@ -236,7 +247,6 @@ function update()
 			var millieu = (window.devicePixelRatio*windows_size)/2;
 			
 			var offset = 10;
-			console.log(FRAME[f][2]);
 			if(FRAME[f][2] == 1){
 				correct_img = FRAME[f][0];
 				context.drawImage(correct_img, millieu-512-(offset/2), 0);
@@ -253,7 +263,7 @@ function update()
 		n_frames++;
 	}
 	
-	else if(state == "start response") {
+	else if(state == "start response") {			// wait for the user's reply
 	
 		t0 = null;
 		instruction_text.innerHTML = "<b>LEFT OR RIGHT? RESPOND USING ARROWS</b>";
@@ -271,6 +281,7 @@ function update()
 	else if(state == "response") {
 		if(t0 === null) t0 = get_time();
 	}
+	
 	else if(state == "end trial") {
 		document.onkeydown = null;
 		instruction_text.innerHTML = "";
@@ -304,12 +315,20 @@ function update()
 			mean_rt += tr.rt
 		}
 		data_text.push([' TOTAL CORRECT = ', (total_trues / params['n_images'])*100, '%', '\n',
-						'MEAN REACTION TIME = ', (mean_rt / params['n_images']), 's'].join(' '));
+						'MEAN REACTION TIME = ', (mean_rt / params['n_images']).toFixed(3), 's'].join(' '));
 		data_text = data_text.join("\n");
-		console.log(data_text);			// dump data to console for debugging purposes
+		console.log('DEBUG : Results are --> ' + data_text)  // DEBUG
 		
+		var save_data = new FormData();
+		save_data.append("data" ,  data_text);
+		var xhr = (window.XMLHttpRequest) ? new XMLHttpRequest() : new activeXObject("Microsoft.XMLHTTP");
+		xhr.open( 'post', './save.php', true);
+		xhr.send(save_data);
 		
+		document.exitFullscreen();
+		keep_going = false;
 		
+		/*
 		class JavascriptDataDownloader {
 			constructor(data={}) {
 				this.data = data;
@@ -327,10 +346,10 @@ function update()
 				body.removeChild(a);
 			}
 		} 
-
 		new JavascriptDataDownloader(trials).download();
-
+		*/
 		
+		/*
 		instruction_text.innerHTML = "<b>SENDING DATA TO " + data_server + "<b>";
 		data_display_text.innerHTML = "Data sent:<br><pre>" + data_text + "</pre>";
 		var request_text = "data=" + encodeURIComponent(data_text) + "&email=" + encodeURIComponent(subj_info.email);		
@@ -345,108 +364,16 @@ function update()
 										// members to functions that will monitor the request and resubmit 
 										// if necessary)
 		instruction_text.innerHTML = "<b>DATA SENT TO " + data_server + "<b>";
-		document.exitFullscreen();
-		keep_going = false;
+		
+		*/
 	}
 	
 	if(keep_going)
 		requestAnimationFrame(update);	// will call update on next frame (usually)
 }
+//  ------------------------------------------------ MAIN
 
-// this function is called when something happens the HTTP request used to send the data to the server
-// it can be used to make sure that the data actually reaches its destination, and in the rare case that
-// it doesn't, to try again
-// also consider using the ontimeout function
-/*
-function on_request_state_change()
-{
-	if(request.readyState == 4) {
-		if(request.status == 200)
-			instruction_text.innerHTML = "<b>DATA SUCCESSFULLY SENT TO " + data_server + "<b>";
-		else
-			instruction_text.innerHTML = "<b>DATA DID NOT ARRIVE AT " + data_server + "! (status " + request.status + ")<b>";
-	}
-}
-*/
 
-/*
-Below is a working example of a server-side script, in Python. In our case the script is
-in the file http://lab-perception.org/js/savedata.py. It can be used to receive the data
-and store it in a file with a unique name (0001.dat, 0002.dat, etc.), together with a date
-and time, and to optionally send the data to an email address. Similar scripts can of course
-be written in PHP or other server scripting languages.
-
-When testing, don't forget the set permissions (read and execute for the script, write for the
-directory where the data files will go: in our case, ./data). Also make sure that your server
-will execute the script. In my case (Apache 2), I added the following lines the configuration
-file:
-<Directory "/var/www/html/js">
-	Require all granted
-	Options +ExecCGI
-	AddHandler cgi-script .cgi .py
-</Directory>
-<Directory "/var/www/html/js/data">
-	Require all denied
-</Directory>
-
-Also note that if the server-side script isn't on the same site that served the client script
-(for example, if you simply execute the client script from a file on your own machine), this
-would be an example of Cross-Origin Resource Sharing (CORS), and needs to be handled carefully
-(see https://web.dev/cross-origin-resource-sharing/).
-*/
-/*
-#!/usr/bin/env python
-
-import cgi, os, datetime, re
-import smtplib
-from email.mime.text import MIMEText
-
-DATA_DIR = './data'             # the directory in which to put the data file
-SUFFIX = 'dat'
-EMAIL_FROM = 'Mark Wexler <mark@lab-perception.org>'
-EMAIL_SMTP = 'localhost'
-
-dt = datetime.datetime.now()    # get current date and time (put it as a comment at the beginning of the data file)
-millis = int(round(float(dt.microsecond)/1000.0))
-now = dt.strftime('%Y-%m-%d-%H-%M-%S') + '-' + ('%03d' % millis)
-
-fs = cgi.FieldStorage()         # get the data field
-data = fs.getfirst('data')
-
-os.chdir(DATA_DIR)              # get the next unused name for a data file
-file_names = os.listdir('.')    # order is 0001.dat, 0002.dat, etc.
-existing = []
-for file_name in file_names:
-    m = re.match(r'^([0-9]+)\.' + SUFFIX + r'$', file_name)
-    if m:
-        existing.append(int(m.group(1)))
-if existing:
-    n = max(existing) + 1
-else:
-    n = 1
-data_fn = '%04d.%s' % (n, SUFFIX)
-
-fp = open(data_fn, 'wt')        # save the data
-fp.write('# ' + now + '\n')     # first the date and time as a comment
-fp.write(data)                  # then the contents of the data field
-fp.close()
-
-# send the data by email, if we got an email address
-if 'email' in fs:
-    email = fs.getfirst('email').strip()
-    if email:
-        msg = MIMEText(data)
-        msg['Subject'] = 'data from on-line experiment'
-        msg['From'] = EMAIL_FROM
-        msg['To'] = email
-        s = smtplib.SMTP(EMAIL_SMTP)
-        s.sendmail(EMAIL_FROM, [email], msg.as_string())
-        s.quit()
-
-print('Content-Type: text/html')    # you have to send something back
-print('')                           # even if it won't be displayed
-print('ok')
-*/
 
 </script>
 </head>
