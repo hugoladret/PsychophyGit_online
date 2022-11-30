@@ -68,7 +68,7 @@ function new_stimulus(trial)
 	var n_frames = Math.round(params['stimulus_duration']*params['frame_rate']);
 	FRAME = new Array(n_frames);
 	for(var f = 0; f < n_frames; f++) {
-		FRAME[f] = [true_img, ai_img,correct_direction];
+		FRAME[f] = [true_img, ai_img, correct_direction];
 	}
 }
 
@@ -166,27 +166,25 @@ function update()
 		document.documentElement.requestFullscreen();
 		
 		trials = [];		// create factorial plan
-		
 		for(var i = 1; i <= params['n_images']; i++){
 			trials.push({img_idx : i});
 		}
-		
 		shuffle_array(trials);	// randomize order of trials
 		console.log(trials);
 		n_trial = 0;
 		
-		canvas = document.createElement("canvas");		// create canvas for stimulus
-		canvas.width = window.devicePixelRatio*params['width_pix'];		// the next four lines set the size and resolution
+		canvas = document.createElement("canvas");							// create canvas for stimulus
+		canvas.width = window.devicePixelRatio*params['width_pix'];			// the next four lines set the size and resolution
 		canvas.height = window.devicePixelRatio*params['height_pix'];		// the canvas; you need to scale .width and .height by
 		canvas.style.width = params['width_pix'] + "px";					// window.devicePixelRatio to get high resolution on
-		canvas.style.height = params['height_pix'] + "px";				// high pixel density monitors, but NOT .style.width/height
+		canvas.style.height = params['height_pix'] + "px";					// high pixel density monitors, but NOT .style.width/height
 		center(canvas);
 		var context = canvas.getContext("2d");
 		// the next two transformations set a reference frame where (0, 0) is at the center of the canvas,
 		// (0, +1) is at the top on in the middle and (0, -1) at the bottom in the middle, so the height is 2
 		// (+1, 0) is at the same distance from the center but to the right, etc.
-		context.translate(window.devicePixelRatio*params['width_pix']/2, window.devicePixelRatio*params['height_pix']/2);
-		context.scale(window.devicePixelRatio*params['height_pix']/2, -window.devicePixelRatio*params['height_pix']/2);
+		//context.translate(window.devicePixelRatio*params['width_pix']/2, window.devicePixelRatio*params['height_pix']/2);
+		//context.scale(window.devicePixelRatio*params['height_pix']/2, -window.devicePixelRatio*params['height_pix']/2);
 		height = 2.0;
 		width = (params['width_pix']/params['height_pix'])*height;
 		document.body.appendChild(canvas);
@@ -226,7 +224,6 @@ function update()
 		
 		var context = canvas.getContext("2d");
 		context.clearRect(-width/2, -height/2, width, height);
-		console.log(width, height);
 		if(f >= FRAME.length) {
 			context.clearRect(0, 0, params['width_pix']*2, params['height_pix']*2);
 			state = "start response";
@@ -235,17 +232,18 @@ function update()
 			context.save();
 			context.setTransform(1, 0, 0, 1, 0, 0);
 			
-			var offset = 512;
-			if(FRAME[f][2] = 1){
+			var offset = 600;
+			console.log(FRAME[f][2]);
+			if(FRAME[f][2] == 1){
 				correct_img = FRAME[f][0];
-				context.drawImage(correct_img, 0-offset, 0);
+				context.drawImage(correct_img, 0, 0);
 				false_img = FRAME[f][1];
 				context.drawImage(false_img, 0+offset, 0);
 			} else {
-				correct_img = FRAME[f][1];
+				correct_img = FRAME[f][0];
 				context.drawImage(correct_img, 0+offset, 0);
-				false_img = FRAME[f][0];
-				context.drawImage(false_img, 0-offset, 0);
+				false_img = FRAME[f][1];
+				context.drawImage(false_img, 0, 0);
 			}
 			
 		}
