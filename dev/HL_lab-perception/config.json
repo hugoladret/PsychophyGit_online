@@ -2,7 +2,7 @@
   "width_pix" : 500,
   "height_pix" : 500,
   
-  "stimulus_duration" : 0.5,
+  "stimulus_duration" : 2,
   "frame_rate" : 60,
 
   "true_img_dir" : "true_imgs",
